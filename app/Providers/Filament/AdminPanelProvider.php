@@ -42,7 +42,13 @@ class AdminPanelProvider extends PanelProvider
             ->emailVerification()
             // ->profile()
             ->colors([
+                'danger' => Color::Red,
+                'gray' => Color::Zinc,
+                'info' => Color::Cyan,
                 'primary' => Color::Blue,
+                'secondary' => Color::Slate,
+                'success' => Color::Green,
+                'warning' => Color::Amber,
             ])
             ->sidebarFullyCollapsibleOnDesktop()
             ->discoverResources(in: app_path('Filament/Resources'), for: 'App\\Filament\\Resources')
@@ -77,6 +83,7 @@ class AdminPanelProvider extends PanelProvider
                 ->setNavigationGroup('User Management')
                 ->setIcon('heroicon-o-user')
                 ->shouldShowAvatarForm()
+                ->shouldRegisterNavigation(false)
                 ->setSort(10),
             ])
             ->userMenuItems([

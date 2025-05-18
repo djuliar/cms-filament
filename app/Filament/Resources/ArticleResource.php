@@ -18,6 +18,7 @@ use Illuminate\Support\Facades\Auth;
 use Filament\Forms\Set;
 use Filament\Forms\Components\Tabs;
 use Filament\Forms\Components\Tabs\Tab;
+use Illuminate\Database\Eloquent\Collection;
 
 class ArticleResource extends Resource
 {
@@ -213,9 +214,24 @@ class ArticleResource extends Resource
 			])
 			->bulkActions([
 				Tables\Actions\BulkActionGroup::make([
+                    Tables\Actions\BulkAction::make('Change Status')
+						->icon('heroicon-o-check')
+                        ->requiresConfirmation()
+                        ->form([
+                            Forms\Components\Select::make('status')
+                                ->options(['1' => 'Publish', '0' => 'Draft'])
+                                ->selectablePlaceholder(false)
+                                ->default('1')
+                                ->required(),
+                        ])
+                        ->action(function (Collection $records, array $data) {
+                            $records->each(function($record) use ($data){
+                                Article::where('id', $record->id)->withTrashed()->update(['status' => $data['status']]);
+                            });
+                        }),
 					Tables\Actions\DeleteBulkAction::make(),
-                    Tables\Actions\ForceDeleteBulkAction::make(), 
-                    Tables\Actions\RestoreBulkAction::make(), 
+                    Tables\Actions\ForceDeleteBulkAction::make(),
+                    Tables\Actions\RestoreBulkAction::make(),
 				]),
 			])
 			->emptyStateActions([
