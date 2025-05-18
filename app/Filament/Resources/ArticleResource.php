@@ -24,7 +24,7 @@ class ArticleResource extends Resource
 	protected static ?string $model = Article::class;
 
 	protected static ?string $navigationGroup = 'News';
-	protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+	protected static ?string $navigationIcon = 'heroicon-o-newspaper';
 	protected static ?string $navigationLabel = 'Articles';
 	protected static ?string $label = 'Article';
 	protected static ?int $navigationSort = 1;
@@ -100,6 +100,8 @@ class ArticleResource extends Resource
 						Forms\Components\FileUpload::make('image')
 							->image()
 							->directory('articles')
+                            ->enableOpen()
+                            ->enableDownload()
 							->columnSpan(4),
 					]),
 
@@ -158,24 +160,23 @@ class ArticleResource extends Resource
 			Tables\Columns\TextColumn::make('date')
 				->date()
 				->sortable(),
+			Tables\Columns\TextColumn::make('user.name')
+				->words(2)
+				->searchable(),
 			Tables\Columns\ImageColumn::make('image')
 				->size(50),
 			Tables\Columns\TextColumn::make('category.name')
 				->badge()
 				->sortable(),
-			Tables\Columns\TextColumn::make('user.name')
-				->words(2)
-				->searchable(),
+            // Multiple tags column preview
+            Tables\Columns\TextColumn::make('tags')->badge()->state(function (Article $record): array {
+                return $record->tags->pluck('name')->toArray();
+            })->color('gray'),
+            // End of multiple tags column preview
 			Tables\Columns\IconColumn::make('featured')
 				->boolean(),
 			Tables\Columns\TextColumn::make('status')
 				->badge(),
-
-            // Multiple tags column preview
-            Tables\Columns\TextColumn::make('tags')->badge()->state(function (Article $record): array {
-                return $record->tags->pluck('name')->toArray();
-            }),
-            // End of multiple tags column preview
 
 			Tables\Columns\TextColumn::make('created_at')
 				->dateTime()
@@ -194,11 +195,6 @@ class ArticleResource extends Resource
                 Tables\Filters\TrashedFilter::make(),
 				Tables\Filters\SelectFilter::make('category_id')
 					->relationship('category', 'name'),
-				Tables\Filters\SelectFilter::make('status')
-					->options([
-						'1' => 'Publish',
-						'0' => 'Draft',
-					]),
                 Tables\Filters\SelectFilter::make('tags')
 					->relationship('tags', 'name'),
 			])
