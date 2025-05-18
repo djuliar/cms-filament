@@ -13,7 +13,10 @@ class EditArticle extends EditRecord
     protected function getHeaderActions(): array
     {
         return [
+            Actions\ReplicateAction::make(),
             Actions\DeleteAction::make(),
+            Actions\ForceDeleteAction::make(), 
+            Actions\RestoreAction::make(), 
         ];
     }
 

@@ -16,7 +16,6 @@ class Dashboard extends Page
         return [
             Widgets\AccountWidget::class,
         ];
-
     }
 
     protected function getFooterWidgets() : array
@@ -24,6 +23,5 @@ class Dashboard extends Page
         return [
             Widgets\FilamentInfoWidget::class,
         ];
-
     }
 }

@@ -18,7 +18,7 @@ use Illuminate\Routing\Middleware\SubstituteBindings;
 use Illuminate\Session\Middleware\StartSession;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
 
-use Filament\Navigation\NavigationGroup;
+use Illuminate\Support\Facades\Auth;
 use Filament\Navigation\MenuItem;
 use App\Filament\Pages\Dashboard;
 use Joaopaulolndev\FilamentEditProfile\FilamentEditProfilePlugin;
@@ -83,7 +83,7 @@ class AdminPanelProvider extends PanelProvider
             ])
             ->userMenuItems([
                 'profile' => MenuItem::make()
-                    ->label(fn() => auth()->user()->name)
+                    ->label(fn() => Auth::user()->name)
                     ->url(fn (): string => EditProfilePage::getUrl())
                     ->icon('heroicon-m-user-circle')
             ]);

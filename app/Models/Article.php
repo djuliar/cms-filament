@@ -3,10 +3,16 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use App\Enums\Publish;
 
 class Article extends Model
 {
+    use HasFactory, SoftDeletes;
+
+    protected $dates = ['deleted_at'];
+
     protected $fillable = [
         'title',
         'slug',
@@ -30,7 +36,7 @@ class Article extends Model
     ];
 
     protected $casts = [
-        'tags' => 'array',
+        'meta_keyword' => 'array',
         'date' => 'datetime',
         'status' => Publish::class,
     ];
@@ -47,6 +53,6 @@ class Article extends Model
 
     public function tags()
     {
-        return $this->belongsToMany('App\Models\Tag', 'article_tag');
+        return $this->belongsToMany('App\Models\Tag', 'article_tags', 'article_id', 'tag_id');
     }
 }

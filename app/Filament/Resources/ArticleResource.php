@@ -14,7 +14,10 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Auth;
 use Filament\Forms\Set;
+use Filament\Forms\Components\Tabs;
+use Filament\Forms\Components\Tabs\Tab;
 
 class ArticleResource extends Resource
 {
@@ -22,164 +25,173 @@ class ArticleResource extends Resource
 
 	protected static ?string $navigationGroup = 'News';
 	protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+	protected static ?string $navigationLabel = 'Articles';
+	protected static ?string $label = 'Article';
 	protected static ?int $navigationSort = 1;
 
 	public static function form(Form $form): Form
 	{
-		return $form
-			->schema([
-				Forms\Components\Section::make()
-					->columnSpanFull()
-					->schema([
-						Forms\Components\Hidden::make('user_id')
-							->default(fn() => auth()->user()->id),
+		return $form->schema([
+			Tabs::make('Article')->columnSpanFull()->tabs([
+				Tab::make('Article Section')->icon('heroicon-m-document-text')->schema([
+					Forms\Components\Hidden::make('user_id')
+						->default(fn() => Auth::user()->id)
+						->hidden(fn(string $operation): bool => $operation === 'edit'),
+					Forms\Components\Hidden::make('user_id_last_edit')
+						->formatStateUsing(fn($state) => Auth::user()->id),
 
-						Forms\Components\Group::make()
-							->columns(12)
-							->schema([
-								Forms\Components\TextInput::make('title')
-									->maxLength(50)
-									->live(onBlur: true)
-									->afterStateUpdated(fn (Set $set, ?string $state) => $set('slug', Str::slug($state)))
-									->columnSpan(8)
-									->required(),
-								Forms\Components\TextInput::make('slug')
-									->helperText('Auto generate from title, if left empty.')
-									->maxLength(50)
-									->unique(ignoreRecord: true)
-									->columnSpan(4),
-							]),
-
-						Forms\Components\Group::make()
-							->columns(12)
-							->schema([
-								Forms\Components\Select::make('category_id')
-									->relationship('category', 'name')
-									->searchable()
-									->columnSpan(2)
-									->required(),
-								Forms\Components\TagsInput::make('tags')
-									->placeholder('Add tags')
-									->color('primary')
-									->splitKeys(['Tab', ' '])
-									->reorderable()
-									->columnSpan(4),
-								Forms\Components\DatePicker::make('date')
-									->columnSpan(2)
-									->required(),
-								Forms\Components\ToggleButtons::make('featured')
-									->boolean()
-									->inline()
-									->default(false)
-									->columnSpan(2)
-									->required(),
-								Forms\Components\ToggleButtons::make('editable')
-									->boolean()
-									->inline()
-									->default(true)
-									->columnSpan(2)
-									->required(),
-							]),
-
-						Forms\Components\Group::make()
-							->columns(12)
-							->schema([
-								Forms\Components\RichEditor::make('content')
-									->required()
-									->columnSpan(8),
-								Forms\Components\FileUpload::make('image')
-									->image()
-                                    ->directory('articles')
-									->columnSpan(4),
-							]),
-
-						Forms\Components\Group::make()
-							->columns(12)
-							->schema([
-								Forms\Components\Select::make('status')
-									->options([
-										'0' => 'Draft',
-										'1' => 'Publish',
-									])
-									->default('0')
-									->columnSpan(4)
-									->required(),
-							]),
+					Forms\Components\Group::make()->columns(12)->schema([
+						Forms\Components\TextInput::make('title')
+							->maxLength(50)
+							->live(onBlur: true)
+							->afterStateUpdated(fn(Set $set, ?string $state) => $set('slug', Str::slug($state)))
+							->columnSpan(8)
+							->required(),
+						Forms\Components\TextInput::make('slug')
+							->helperText('Auto generate from title, if left empty.')
+							->maxLength(50)
+							->unique(ignoreRecord: true)
+							->columnSpan(4),
 					]),
 
-				Forms\Components\Section::make("Additional Meta")
-                    ->description('Fill in this section if you want to maximize sharing on social media platforms.')
-					->columnSpanFull()
-					->schema([
-                        Forms\Components\Group::make()
-							->columns(12)
-							->schema([
-								Forms\Components\TextInput::make('meta_description')
-                                    ->label('Meta Description')
-									->columnSpan(4),
-								Forms\Components\TextInput::make('meta_author')
-                                    ->label('Meta Author')
-									->columnSpan(4),
-								Forms\Components\TextInput::make('meta_keywords')
-									->label('Meta Keywords')
-									->columnSpan(4),
+					Forms\Components\Group::make()->columns(12)->schema([
+						Forms\Components\Select::make('category_id')
+							->relationship('category', 'name')
+							->searchable()
+							->columnSpan(2)
+							->required(),
+						Forms\Components\Select::make('article_tag')
+							->relationship('tags', 'name')
+							->multiple()
+							->searchable()
+							->columnSpan(4)
+							->createOptionForm([
+								Forms\Components\TextInput::make('name')
+									->maxLength(50)
+									->live(onBlur: true)
+									->afterStateUpdated(fn(Set $set, ?string $state) => $set('slug', Str::slug($state)))
+									->columnSpan(1)
+									->required()
+									->unique(ignoreRecord: true),
+								Forms\Components\Hidden::make('slug')
+									->unique(ignoreRecord: true),
 							]),
+						Forms\Components\DatePicker::make('date')
+							->columnSpan(2)
+							->required(),
+						Forms\Components\ToggleButtons::make('featured')
+							->boolean()
+							->inline()
+							->default(false)
+							->columnSpan(2)
+							->required(),
+						Forms\Components\ToggleButtons::make('editable')
+							->boolean()
+							->inline()
+							->default(true)
+							->columnSpan(2)
+							->required(),
+					]),
 
-                        Forms\Components\Group::make()
-							->columns(12)
-							->schema([
-								Forms\Components\TextInput::make('og_title')
-                                    ->label('OG Title')
-									->columnSpan(5),
-								Forms\Components\TextInput::make('og_description')
-                                    ->label('OG Description')
-									->columnSpan(5),
-								Forms\Components\FileUpload::make('og_image')
-                                    ->label('OG Image')
-									->image()
-                                    ->directory('articles/og_images')
-									->columnSpan(2),
-							]),
-                    ]),
-			]);
+					Forms\Components\Group::make()->columns(12)->schema([
+						Forms\Components\RichEditor::make('content')
+							->required()
+							->columnSpan(8),
+						Forms\Components\FileUpload::make('image')
+							->image()
+							->directory('articles')
+							->columnSpan(4),
+					]),
+
+					Forms\Components\Group::make()->columns(12)->schema([
+						Forms\Components\Select::make('status')
+							->options([
+								'0' => 'Draft',
+								'1' => 'Publish',
+							])
+							->default('0')
+							->columnSpan(4)
+							->required(),
+					]),
+				]),
+
+				Tab::make('Meta Information')->icon('heroicon-m-information-circle')->schema([
+					Forms\Components\Group::make()->columns(12)->schema([
+						Forms\Components\TextInput::make('meta_description')
+							->label('Meta Description')
+							->columnSpan(4),
+						Forms\Components\TextInput::make('meta_author')
+							->label('Meta Author')
+							->columnSpan(4),
+						Forms\Components\TagsInput::make('meta_keyword')
+							->placeholder('Add keywords')
+							->label('Meta Keywords')
+							->color('primary')
+							->splitKeys(['Tab', ' '])
+							->reorderable()
+							->columnSpan(4),
+					]),
+					Forms\Components\Group::make()->columns(12)->schema([
+						Forms\Components\TextInput::make('og_title')
+							->label('OG Title')
+							->columnSpan(5),
+						Forms\Components\TextInput::make('og_description')
+							->label('OG Description')
+							->columnSpan(5),
+						Forms\Components\FileUpload::make('og_image')
+							->label('OG Image')
+							->image()
+							->directory('articles/og_images')
+							->columnSpan(2),
+					]),
+				]),
+			]),
+		]);
 	}
 
 	public static function table(Table $table): Table
 	{
-		return $table
-			->columns([
-				Tables\Columns\TextColumn::make('title')
-					->words(10)
-					->searchable(isIndividual: true),
-				Tables\Columns\TextColumn::make('date')
-					->date()
-					->sortable(),
-				Tables\Columns\ImageColumn::make('image')
-					->size(50),
-				Tables\Columns\TextColumn::make('category.name')
-					->badge()
-					->sortable(),
-				Tables\Columns\TextColumn::make('user.name')
-					->words(2)
-					->searchable(),
-				Tables\Columns\IconColumn::make('featured')
-					->boolean(),
-				Tables\Columns\TextColumn::make('status')
-					->badge(),
-				Tables\Columns\TextColumn::make('tags')
-					->badge()
-					->searchable(isIndividual: true)
-					->sortable(),
-				Tables\Columns\TextColumn::make('created_at')
-					->dateTime()
-					->sortable()
-					->toggleable(isToggledHiddenByDefault: true),
-				Tables\Columns\TextColumn::make('updated_at')
-					->dateTime()
-					->sortable()
-					->toggleable(isToggledHiddenByDefault: true),
-			])
+		return $table->columns([
+			Tables\Columns\TextColumn::make('title')
+				->words(10)
+				->searchable(isIndividual: false),
+			Tables\Columns\TextColumn::make('date')
+				->date()
+				->sortable(),
+			Tables\Columns\ImageColumn::make('image')
+				->size(50),
+			Tables\Columns\TextColumn::make('category.name')
+				->badge()
+				->sortable(),
+			Tables\Columns\TextColumn::make('user.name')
+				->words(2)
+				->searchable(),
+			Tables\Columns\IconColumn::make('featured')
+				->boolean(),
+			Tables\Columns\TextColumn::make('status')
+				->badge(),
+
+            // Multiple tags column preview
+            Tables\Columns\TextColumn::make('tags')->badge()->state(function (Article $record): array {
+                return $record->tags->pluck('name')->toArray();
+            }),
+            // End of multiple tags column preview
+
+			Tables\Columns\TextColumn::make('created_at')
+				->dateTime()
+				->sortable()
+				->toggleable(isToggledHiddenByDefault: true),
+			Tables\Columns\TextColumn::make('updated_at')
+				->dateTime()
+				->sortable()
+				->toggleable(isToggledHiddenByDefault: true),
+			Tables\Columns\TextColumn::make('deleted_at')
+				->dateTime()
+				->sortable()
+				->toggleable(isToggledHiddenByDefault: true),
+		])
 			->filters([
+                Tables\Filters\TrashedFilter::make(),
 				Tables\Filters\SelectFilter::make('category_id')
 					->relationship('category', 'name'),
 				Tables\Filters\SelectFilter::make('status')
@@ -187,23 +199,31 @@ class ArticleResource extends Resource
 						'1' => 'Publish',
 						'0' => 'Draft',
 					]),
+                Tables\Filters\SelectFilter::make('tags')
+					->relationship('tags', 'name'),
 			])
 			->actions([
 				Tables\Actions\ActionGroup::make([
-                    Tables\Actions\Action::make('Show Articles')
-                        ->icon('heroicon-o-newspaper')
-                        ->url(fn (Article $record): string => route('page', ['id' => $record->id]))
-                        ->openUrlInNewTab()
-                        ->color('success'),
+					Tables\Actions\Action::make('Show Articles')
+						->icon('heroicon-o-newspaper')
+						->url(fn(Article $record): string => route('page', ['id' => $record->id]))
+						->openUrlInNewTab()
+						->color('success'),
 					Tables\Actions\ViewAction::make(),
 					Tables\Actions\EditAction::make(),
 					Tables\Actions\DeleteAction::make(),
+                    Tables\Actions\RestoreAction::make(),
 				]),
 			])
 			->bulkActions([
 				Tables\Actions\BulkActionGroup::make([
 					Tables\Actions\DeleteBulkAction::make(),
+                    Tables\Actions\ForceDeleteBulkAction::make(), 
+                    Tables\Actions\RestoreBulkAction::make(), 
 				]),
+			])
+			->emptyStateActions([
+				Tables\Actions\CreateAction::make(),
 			]);
 	}
 
@@ -237,4 +257,12 @@ class ArticleResource extends Resource
 	{
 		return static::getModel()::count() > 5 ? 'success' : 'danger';
 	}
+
+    public static function getEloquentQuery(): Builder
+    {
+        return parent::getEloquentQuery()
+            ->withoutGlobalScopes([
+                SoftDeletingScope::class,
+            ]);
+    }
 }

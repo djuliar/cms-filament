@@ -15,7 +15,8 @@ return new class extends Migration
             $table->id();
             $table->string('name', 50)->nullable();
             $table->string('slug', 50)->nullable();
-            $table->integer('status')->unsigned()->nullable();
+            $table->string('color', 7)->nullable();
+            $table->integer('status')->unsigned()->nullable()->default(1);
             $table->integer('sort')->unsigned()->nullable();
             $table->timestamps();
             $table->softDeletes();

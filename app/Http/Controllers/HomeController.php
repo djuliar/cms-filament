@@ -10,6 +10,6 @@ class HomeController extends Controller
 
     function page()
     {
-        return dd(Article::where('category_id', request()->input('id'))->get());
+        return dd(Article::where('id', request()->input('id'))->get());
     }
 }
