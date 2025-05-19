@@ -15,11 +15,12 @@ use Illuminate\Database\Eloquent\SoftDeletingScope;
 
 use Filament\Facades\Filament;
 use Rawilk\FilamentPasswordInput\Password;
+use Illuminate\Support\Facades\Hash;
 
 class UserResource extends Resource
 {
     protected static ?string $model = User::class;
-    
+
     protected static ?string $navigationGroup = "User Management";
     protected static ?string $navigationIcon = 'heroicon-o-users';
     protected static ?string $navigationLabel = 'Users';
@@ -30,45 +31,43 @@ class UserResource extends Resource
     {
         return $form
             ->schema([
-                Forms\Components\Section::make()
-					->columnSpanFull()
-					->schema([
-                        Forms\Components\Group::make()
-                            ->columns(12)
-                            ->schema([
-                                Forms\Components\TextInput::make('name')
-                                    ->required()
-                                    ->maxLength(255)
-                                    ->columnSpan(6),
-                                Forms\Components\TextInput::make('email')
-                                    ->email()
-                                    ->required()
-                                    ->maxLength(255)
-                                    ->unique(ignoreRecord: true)
-                                    ->columnSpan(6),
-                            ]),
-                        Forms\Components\Group::make()
-                            ->columns(12)
-                            ->schema([
-                                Password::make('password')
-                                    ->dehydrateStateUsing(fn ($state) => Hash::make($state))
-                                    ->dehydrated(fn ($state) => filled($state))
-                                    ->required(fn (string $context): bool => $context === 'create')
-                                    ->maxLength(255)
-                                    ->columnSpan(4),
-                                Password::make('password_confirmation')
-                                    ->required(fn (string $context): bool => $context === 'create')
-                                    ->maxLength(255)
-                                    ->same('password')
-                                    ->columnSpan(4),
-                                Forms\Components\FileUpload::make('avatar_url')
-                                    ->label('Avatar')
-                                    ->image()
-                                    ->directory('avatars')
-                                    ->columnSpan(2),
-                            ]),
+                Forms\Components\Section::make("Avatar")
+                    ->columnSpan(3)
+                    ->schema([
+                        Forms\Components\FileUpload::make('avatar_url')
+                            ->label('')
+                            ->image()
+                            ->openable()
+                            ->downloadable()
+                            ->directory('avatars'),
                     ]),
-            ]);
+                Forms\Components\Section::make("User Information")
+                    ->columnSpan(9)
+                    ->columns(12)
+                    ->schema([
+                        Forms\Components\TextInput::make('name')
+                            ->required()
+                            ->maxLength(255)
+                            ->columnSpan(12),
+                        Forms\Components\TextInput::make('email')
+                            ->email()
+                            ->required()
+                            ->maxLength(255)
+                            ->unique(ignoreRecord: true)
+                            ->columnSpan(12),
+                        Password::make('password')
+                            ->dehydrateStateUsing(fn ($state) => Hash::make($state))
+                            ->dehydrated(fn ($state) => filled($state))
+                            ->required(fn (string $context): bool => $context === 'create')
+                            ->maxLength(255)
+                            ->columnSpan(6),
+                        Password::make('password_confirmation')
+                            ->required(fn (string $context): bool => $context === 'create')
+                            ->same('password')
+                            ->maxLength(255)
+                            ->columnSpan(6),
+                    ]),
+            ])->columns(12);
     }
 
     public static function table(Table $table): Table

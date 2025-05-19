@@ -46,6 +46,11 @@ class Article extends Model
         return $this->belongsTo('App\Models\User', 'user_id', 'id');
     }
 
+    public function last_edit()
+    {
+        return $this->belongsTo('App\Models\User', 'user_id_last_edit', 'id');
+    }
+
     public function category()
     {
         return $this->belongsTo('App\Models\Category', 'category_id');

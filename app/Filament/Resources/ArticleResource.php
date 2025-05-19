@@ -20,6 +20,9 @@ use Filament\Forms\Components\Tabs;
 use Filament\Forms\Components\Tabs\Tab;
 use Illuminate\Database\Eloquent\Collection;
 
+use Filament\Infolists;
+use Filament\Infolists\Infolist;
+
 class ArticleResource extends Resource
 {
 	protected static ?string $model = Article::class;
@@ -101,8 +104,8 @@ class ArticleResource extends Resource
 						Forms\Components\FileUpload::make('image')
 							->image()
 							->directory('articles')
-                            ->enableOpen()
-                            ->enableDownload()
+							->openable()
+							->downloadable()
 							->columnSpan(4),
 					]),
 
@@ -157,6 +160,7 @@ class ArticleResource extends Resource
 		return $table->columns([
 			Tables\Columns\TextColumn::make('title')
 				->words(10)
+                ->wrap()
 				->searchable(isIndividual: false),
 			Tables\Columns\TextColumn::make('date')
 				->date()
@@ -250,6 +254,7 @@ class ArticleResource extends Resource
 	{
 		return [
 			'index' => Pages\ListArticles::route('/'),
+			'view' => Pages\ViewArticle::route('/{record}'),
 			'create' => Pages\CreateArticle::route('/create'),
 			'edit' => Pages\EditArticle::route('/{record}/edit'),
 		];
@@ -275,6 +280,43 @@ class ArticleResource extends Resource
         return parent::getEloquentQuery()
             ->withoutGlobalScopes([
                 SoftDeletingScope::class,
+            ]);
+    }
+
+    public static function infolist(Infolist $infolist): Infolist
+    {
+        return $infolist
+            ->schema([
+                Infolists\Components\Section::make('Article Information')
+                    ->columnSpanFull()
+                    ->icon('heroicon-o-newspaper')
+                    ->description('Detailed information about the article')
+                    ->schema([
+                        Infolists\Components\Group::make()
+                            ->columns(12)
+                            ->schema([
+                                Infolists\Components\TextEntry::make('title')->columnSpan(4),
+                                Infolists\Components\TextEntry::make('slug')->columnSpan(2),
+                                Infolists\Components\TextEntry::make('date')->datetime()->columnSpan(2),
+                                Infolists\Components\TextEntry::make('user.name')->columnSpan(2),
+                                Infolists\Components\TextEntry::make('last_edit.name')->label('Last Edited By')->columnSpan(2),
+
+                                Infolists\Components\TextEntry::make('category.name')->badge()->columnSpan(2),
+                                Infolists\Components\TextEntry::make('tags')->badge()->state(function (Article $record): array {
+                                    return $record->tags->pluck('name')->toArray();
+                                })->color('gray')->columnSpan(4),
+                                Infolists\Components\IconEntry::make('featured')->boolean()->columnSpan(2),
+                                Infolists\Components\IconEntry::make('editable')->boolean()->columnSpan(2),
+                                Infolists\Components\TextEntry::make('read_count')->columnSpan(2),
+
+                                Infolists\Components\TextEntry::make('content')->html()->columnSpan(12),
+                                Infolists\Components\ImageEntry::make('image')->columnSpan(2),
+                                Infolists\Components\TextEntry::make('status')->badge()->columnSpan(2),
+                                Infolists\Components\TextEntry::make('created_at')->dateTime()->columnSpan(2),
+                                Infolists\Components\TextEntry::make('updated_at')->dateTime()->columnSpan(2),
+                                Infolists\Components\TextEntry::make('deleted_at')->dateTime()->columnSpan(2),
+                            ]),
+                    ]),
             ]);
     }
 }
